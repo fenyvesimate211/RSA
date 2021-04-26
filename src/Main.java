@@ -3,13 +3,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class Main {
-
-    static ArrayList<BigInteger> A = new ArrayList<>();
-    static ArrayList<BigInteger> R = new ArrayList<>();
-    static ArrayList<BigInteger> Q = new ArrayList<>();
-    static ArrayList<BigInteger> X = new ArrayList<>();
-    static ArrayList<BigInteger> Y = new ArrayList<>();
-
     public static BigInteger[] extendedEuclideanAlgorithm(BigInteger a, BigInteger b){
         BigInteger [] eea = new BigInteger[3];
         BigInteger x, x0 = BigInteger.ONE, x1 = BigInteger.ZERO,
@@ -35,30 +28,67 @@ public class Main {
     }
 
     public static BigInteger fastModularExponention(BigInteger a, BigInteger b, BigInteger m){
+        String bInBinary = b.toString(2);
+        StringBuilder bInBinaryRevers = new StringBuilder();
+        bInBinaryRevers.append(bInBinary);
+        bInBinaryRevers = bInBinaryRevers.reverse();
 
+        ArrayList<BigInteger> powersOfA = new ArrayList<>();
+        BigInteger power = a.mod(m);
+        powersOfA.add(power);
+        for (int i = 1; i < bInBinaryRevers.length(); i++) {
+            power = (power.multiply(power)).mod(m);
+            powersOfA.add(power);
+        }
 
-        return a;
-    }
-
-    public static boolean millerRabin(BigInteger a, BigInteger p){
-        boolean prime = false;
-        BigInteger pMinusOne = p.subtract(BigInteger.ONE), d = BigInteger.ZERO;
-        int S = 0;
-        boolean dividable = true;
-        while(dividable){
-            if (pMinusOne.mod(BigInteger.TWO).equals(BigInteger.ZERO)){
-                pMinusOne = pMinusOne.divide(BigInteger.TWO);
-                S++;
-                System.out.println(pMinusOne);
-            } else{
-                d = pMinusOne;
-                dividable = false;
+        ArrayList<BigInteger> powersOfARequired = new ArrayList<>();
+        String binaryBIndex = "";
+        BigInteger element;
+        for (int i = 0; i < bInBinaryRevers.length(); i++) {
+            binaryBIndex = "" + bInBinaryRevers.charAt(i);
+            if (binaryBIndex.equals("1")) {
+                element = powersOfA.get(i);
+                powersOfARequired.add(element);
             }
         }
 
-        for (int i = 0; i < S; i++){
-            a = a.pow(d.intValue()).mod(p);
+        BigInteger r = BigInteger.ONE;
+        for (int i = 0; i < powersOfARequired.size(); i++) {
+            element = powersOfARequired.get(i);
+            r = r.multiply(element);
+        }
 
+        return r.mod(m);
+    }
+
+    public static boolean millerRabin(BigInteger p, BigInteger a){
+        boolean prime = false;
+        int S = 0;
+        BigInteger result, resultMulti, exponent, d = p.subtract(BigInteger.ONE);
+
+        while (d.mod(BigInteger.TWO).equals(BigInteger.ZERO)) {
+            d = d.divide(BigInteger.TWO);
+            S++;
+        }
+
+        result = fastModularExponention(a, d, p);
+
+        if (result.equals(BigInteger.ONE)) {
+            prime = true;
+        } else {
+            exponent = ((BigInteger.TWO).pow(0)).multiply(d);
+            result = fastModularExponention(a, exponent, p);
+            if (result.equals(BigInteger.valueOf(-1))) {
+                prime = true;
+            } else {
+                for (int i = 1; i < S; i++) {
+                    resultMulti = result.multiply(result);
+                    result = resultMulti.mod(p); // 166
+                    if (result.equals(BigInteger.valueOf(-1))) {
+                        prime = true;
+                    }
+                }
+            }
         }
 
         return prime;
@@ -72,10 +102,13 @@ public class Main {
 //
 //        System.out.println(p);
 //        System.out.println(q);
-        BigInteger p = BigInteger.valueOf(561);
+        BigInteger p = BigInteger.valueOf(17);
         BigInteger q = BigInteger.valueOf(123);
+        BigInteger a = BigInteger.valueOf(2);
+        BigInteger b = BigInteger.valueOf(17);
         extendedEuclideanAlgorithm(p,q);
-        millerRabin(BigInteger.TWO, p);
+        System.out.println("mr: " + millerRabin(BigInteger.valueOf(17), BigInteger.valueOf(2)));
+        System.out.println("fme: " + fastModularExponention(a, b, p));
 
 
         System.out.println("Add meg mit szeretnél csináni:\nT esetén titkosít\nV esetén visszafejt");
